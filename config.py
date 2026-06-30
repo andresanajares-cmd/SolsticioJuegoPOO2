@@ -35,4 +35,14 @@ ALTURA_SUELO = 80  # alto en pixeles de la franja de suelo, medida desde abajo
 
 RUTA_FONDO = "assets/fondos/fondo1.jpeg"
 RUTA_SUELO = "assets/suelo/suelo.jpeg"
-RUTA_SPRITE_KAEL = "assets/personajes/kael.png"
+RUTA_SPRITE_KAEL = "assets/personajes/kael.png"  # se usa solo si no hay frames de animacion
+
+# ----- Animacion de Kael -----
+# Carpeta donde estan los frames de cada animacion, nombrados como:
+#   kael_idle_0.png, kael_idle_1.png, ...
+#   kael_correr_0.png, kael_correr_1.png, ...
+#   kael_saltar_0.png, kael_saltar_1.png, ...
+# Si para un estado no existe ningun frame, se usa RUTA_SPRITE_KAEL (o el
+# placeholder de color) como imagen fija para ese estado.
+CARPETA_ANIMACIONES_KAEL = "assets/personajes"
+ANIMACION_FPS = 8  # cuantos frames de animacion se muestran por segundo

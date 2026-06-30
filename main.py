@@ -76,6 +76,8 @@ def main():
 
     ejecutando = True
     while ejecutando:
+        dt_ms = reloj.tick(config.FPS)  # milisegundos transcurridos desde el frame anterior
+
         # ---- Eventos ----
         for evento in pygame.event.get():
             if evento.type == pygame.QUIT:
@@ -86,7 +88,7 @@ def main():
         kael.manejar_entrada(teclas)
 
         # ---- Actualizacion ----
-        kael.actualizar(suelo_y=y_suelo)
+        kael.actualizar(suelo_y=y_suelo, dt_ms=dt_ms)
 
         # ---- Dibujado ----
         pantalla.blit(fondo, (0, 0))
@@ -94,7 +96,6 @@ def main():
         kael.dibujar(pantalla)
 
         pygame.display.flip()
-        reloj.tick(config.FPS)
 
     pygame.quit()
     sys.exit()
