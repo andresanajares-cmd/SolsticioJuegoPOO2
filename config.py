@@ -31,7 +31,7 @@ TECLA_SALTAR = pygame.K_w
 # ----- Fisica -----
 GRAVEDAD = 0.8
 VELOCIDAD_MOVIMIENTO = 5
-FUERZA_SALTO = -18
+FUERZA_SALTO = -17
 
 # ----- Suelo -----
 ALTURA_SUELO = 80  # alto en pixeles de la franja de suelo, medida desde abajo
