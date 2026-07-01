@@ -7,20 +7,31 @@ Segun el GDD (seccion 2.4), las constantes van en MAYUSCULAS en este archivo.
 
 import os
 
+import pygame
+
 # Carpeta donde esta este archivo (la raiz del proyecto). Se usa para que las
 # rutas de assets funcionen sin importar desde donde ejecutes "python main.py".
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+pygame.display.init()
 # ----- Ventana -----
-ANCHO = 800
-ALTO = 600
+ANCHO = 1500
+ALTO = 800
 FPS = 60
 TITULO = "Solsticio: El Ultimo Guardian"
+
+# ----- Controles de Kael -----
+# Cambia aqui las teclas sin tocar el resto del codigo.
+# Lista completa de codigos de tecla disponibles (pygame.K_...):
+# https://www.pygame.org/docs/ref/key.html
+TECLA_IZQUIERDA = pygame.K_a
+TECLA_DERECHA = pygame.K_d
+TECLA_SALTAR = pygame.K_w
 
 # ----- Fisica -----
 GRAVEDAD = 0.8
 VELOCIDAD_MOVIMIENTO = 5
-FUERZA_SALTO = -15
+FUERZA_SALTO = -18
 
 # ----- Suelo -----
 ALTURA_SUELO = 80  # alto en pixeles de la franja de suelo, medida desde abajo
@@ -33,9 +44,10 @@ ALTURA_SUELO = 80  # alto en pixeles de la franja de suelo, medida desde abajo
 # de color como placeholder para que el juego siga corriendo mientras
 # consigues el arte definitivo.
 
-RUTA_FONDO = "assets/fondos/fondo1.jpeg"
-RUTA_SUELO = "assets/suelo/suelo.jpeg"
+RUTA_FONDO = "assets/fondos/fondo.jpeg"
+RUTA_SUELO = "assets/suelo/suelo.png"
 RUTA_SPRITE_KAEL = "assets/personajes/kael.png"  # se usa solo si no hay frames de animacion
+RUTA_PLATAFORMA = "assets/plataformas/plataforma.png"  # Ej: "assets/plataformas/roca_volcan.png". Si esta vacia, se usa un color solido.
 
 # ----- Animacion de Kael -----
 # Carpeta donde estan los frames de cada animacion, nombrados como:

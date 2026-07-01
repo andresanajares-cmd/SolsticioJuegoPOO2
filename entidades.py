@@ -97,8 +97,8 @@ class Kael(EntidadJuego):
     Si un estado no tiene frames, se usa RUTA_SPRITE_KAEL como imagen fija.
     """
 
-    ANCHO_KAEL = 40
-    ALTO_KAEL = 56
+    ANCHO_KAEL = 80
+    ALTO_KAEL = 120
 
     ESTADOS_ANIMACION = ("idle", "correr", "saltar")
 
@@ -163,27 +163,36 @@ class Kael(EntidadJuego):
         """Lee el estado del teclado y define la velocidad horizontal, el salto y la orientacion."""
         self.velocidad_x = 0
 
-        if teclas[pygame.K_LEFT]:
+        if teclas[config.TECLA_IZQUIERDA]:
             self.velocidad_x = -config.VELOCIDAD_MOVIMIENTO
             self.mirando_derecha = False
-        if teclas[pygame.K_RIGHT]:
+        if teclas[config.TECLA_DERECHA]:
             self.velocidad_x = config.VELOCIDAD_MOVIMIENTO
             self.mirando_derecha = True
 
-        if teclas[pygame.K_SPACE] and self.en_suelo:
+        if teclas[config.TECLA_SALTAR] and self.en_suelo:
             self.velocidad_y = config.FUERZA_SALTO
             self.en_suelo = False
 
     def aplicar_gravedad(self):
         self.velocidad_y += config.GRAVEDAD
 
-    def actualizar(self, suelo_y: int, dt_ms: int = 16):
+    def actualizar(self, suelo_y: int, plataformas=None, dt_ms: int = 16):
         """
         Mueve a Kael segun su velocidad actual, aplica gravedad, resuelve
-        la colision simple con el suelo y avanza la animacion.
+        la colision simple con el suelo y con las plataformas del nivel,
+        y avanza la animacion.
         `suelo_y` es la coordenada Y de la superficie del suelo.
+        `plataformas` es una lista de Plataforma (puede venir vacia o None).
         `dt_ms` son los milisegundos transcurridos desde el frame anterior.
         """
+        plataformas = plataformas or []
+
+        # Guardamos donde estaban los pies de Kael ANTES de moverse este frame.
+        # Sirve para saber si "venia cayendo desde arriba" de una plataforma,
+        # y asi no aterrizar sobre ella si la golpea de lado o desde abajo.
+        pies_antes = self.y + self.alto
+
         self.aplicar_gravedad()
 
         self.x += self.velocidad_x
@@ -192,13 +201,30 @@ class Kael(EntidadJuego):
         # Limites laterales de la ventana
         self.x = max(0, min(self.x, config.ANCHO - self.ancho))
 
-        # Colision simple con el suelo
+        self.en_suelo = False
+
+        # Colision con plataformas: solo aterriza si cae sobre ellas desde arriba
+        if self.velocidad_y >= 0:
+            for plataforma in plataformas:
+                hay_solape_horizontal = (
+                    self.x + self.ancho > plataforma.x
+                    and self.x < plataforma.x + plataforma.ancho
+                )
+                venia_cayendo_sobre_ella = (
+                    pies_antes <= plataforma.y
+                    and self.y + self.alto >= plataforma.y
+                )
+                if hay_solape_horizontal and venia_cayendo_sobre_ella:
+                    self.y = plataforma.y - self.alto
+                    self.velocidad_y = 0
+                    self.en_suelo = True
+                    break  # ya aterrizo, no hace falta seguir revisando otras
+
+        # Colision con el suelo
         if self.y + self.alto >= suelo_y:
             self.y = suelo_y - self.alto
             self.velocidad_y = 0
             self.en_suelo = True
-        else:
-            self.en_suelo = False
 
         self.rect.topleft = (self.x, self.y)
 
@@ -228,3 +254,27 @@ class Kael(EntidadJuego):
 
         frame = frames[self.frame_actual]
         self.imagen = frame if self.mirando_derecha else pygame.transform.flip(frame, True, False)
+
+
+class Plataforma(EntidadJuego):
+    """
+    Plataforma fija donde Kael puede pararse, ademas del suelo.
+
+    Por composicion (GDD 2.5: "Juego contiene Nivel"), la clase Nivel
+    guarda una lista de Plataforma para armar el escenario de cada zona.
+
+    Por ahora las plataformas son fijas (no se mueven). Mas adelante,
+    para el Bosque de Piedra (plataformas moviles horizontales) se puede
+    crear una subclase PlataformaMovil que redefina actualizar().
+    """
+
+    def __init__(self, x: float, y: float, ancho: int, alto: int, ruta_imagen: str = ""):
+        super().__init__(
+            x, y, ancho, alto,
+            ruta_imagen=ruta_imagen or config.RUTA_PLATAFORMA,
+            color_placeholder=(0, 0, 0),  # marron rocoso, provisional
+        )
+
+    def actualizar(self, *args, **kwargs):
+        """Una plataforma fija no necesita logica de actualizacion por frame."""
+        pass

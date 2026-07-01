@@ -18,6 +18,7 @@ import pygame
 
 import config
 from entidades import Kael
+from nivel import crear_nivel_1
 
 
 def cargar_fondo():
@@ -49,7 +50,7 @@ def cargar_suelo():
             print(f"[Aviso] No se pudo cargar el suelo '{ruta_absoluta}': {error}. Se usara un color solido.")
 
     superficie = pygame.Surface((config.ANCHO, alto_suelo))
-    superficie.fill((80, 50, 30))  # marron tierra, color provisional
+    superficie.fill((42, 64, 209))  # marron tierra, color provisional
     return superficie, y_suelo
 
 
@@ -70,6 +71,7 @@ def main():
 
     fondo = cargar_fondo()
     textura_suelo, y_suelo = cargar_suelo()
+    nivel = crear_nivel_1()
 
     # Kael arranca parado justo encima del suelo
     kael = Kael(x=config.ANCHO // 2, y=y_suelo - Kael.ALTO_KAEL)
@@ -88,11 +90,12 @@ def main():
         kael.manejar_entrada(teclas)
 
         # ---- Actualizacion ----
-        kael.actualizar(suelo_y=y_suelo, dt_ms=dt_ms)
+        kael.actualizar(suelo_y=y_suelo, plataformas=nivel.plataformas, dt_ms=dt_ms)
 
         # ---- Dibujado ----
         pantalla.blit(fondo, (0, 0))
         dibujar_suelo(pantalla, textura_suelo, y_suelo)
+        nivel.dibujar(pantalla)
         kael.dibujar(pantalla)
 
         pygame.display.flip()
