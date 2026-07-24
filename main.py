@@ -88,6 +88,12 @@ AURA_COLORES = {
 
 TAMANO_TILE = 40
 
+# Tamaño de la miniatura de previsualización que se muestra en el menú de
+# selección de nivel (junto al nombre de cada nivel). Se carga una sola vez,
+# igual que el resto de sprites que no cambian mientras el juego corre.
+TAMANO_MINIATURA_NIVEL = (150, 70)
+MINIATURAS_NIVELES = config.cargar_miniaturas_niveles(TAMANO_MINIATURA_NIVEL)
+
 FUENTE_UI = pygame.font.SysFont("Arial", 18, bold=True)
 FUENTE_TITULO = pygame.font.SysFont("Arial", 50, bold=True)
 
@@ -161,6 +167,64 @@ def _dibujar_boton(superficie, rect, texto, fuente, hover=False,
     superficie.blit(texto_render, texto_render.get_rect(center=rect_dibujo.center))
 
     return rect_dibujo
+
+def _dibujar_tarjeta_nivel(superficie, rect, miniatura, texto, fuente, hover=False):
+    """Dibuja una "tarjeta" para el menú de selección de nivel: una
+    miniatura con la imagen de fondo del nivel (previsualización) a la
+    izquierda, y su nombre a la derecha. Usa el mismo estilo (sombra, borde,
+    esquinas redondeadas y resalte en hover) que el resto de los botones del
+    juego, para que se vea consistente."""
+    color_base = (45, 42, 70)
+    color_borde = MORADO
+    color_hover_fondo = (66, 60, 100)
+    color_hover_borde = AMARILLO
+
+    # Sombra
+    sombra = pygame.Surface(rect.size, pygame.SRCALPHA)
+    pygame.draw.rect(sombra, (0, 0, 0, 90), sombra.get_rect(), border_radius=16)
+    superficie.blit(sombra, (rect.x + 3, rect.y + 5))
+
+    rect_dibujo = rect.move(0, -3) if hover else rect.copy()
+    fondo = color_hover_fondo if hover else color_base
+    borde = color_hover_borde if hover else color_borde
+    grosor = 3 if hover else 2
+
+    pygame.draw.rect(superficie, fondo, rect_dibujo, border_radius=16)
+    pygame.draw.rect(superficie, borde, rect_dibujo, grosor, border_radius=16)
+
+    if hover:
+        barra = pygame.Rect(rect_dibujo.left + 6, rect_dibujo.top + 8, 4, rect_dibujo.height - 16)
+        pygame.draw.rect(superficie, AMARILLO, barra, border_radius=2)
+
+    # --- Miniatura de previsualización, con esquinas redondeadas ---
+    margen = 10
+    rect_mini = pygame.Rect(0, 0, TAMANO_MINIATURA_NIVEL[0], rect_dibujo.height - margen * 2)
+    rect_mini.topleft = (rect_dibujo.left + margen, rect_dibujo.top + margen)
+
+    contenido = pygame.Surface(rect_mini.size, pygame.SRCALPHA)
+    if miniatura is not None:
+        contenido.blit(pygame.transform.smoothscale(miniatura, rect_mini.size), (0, 0))
+    else:
+        # Si el nivel todavía no tiene imagen de fondo configurada, se deja
+        # un recuadro placeholder en vez de dejar el hueco vacío.
+        contenido.fill((25, 22, 42, 255))
+        marca = fuente.render("?", True, (100, 95, 130))
+        contenido.blit(marca, marca.get_rect(center=(rect_mini.width // 2, rect_mini.height // 2)))
+
+    # Máscara con esquinas redondeadas (recorta "contenido" a esa forma)
+    redondeo = pygame.Surface(rect_mini.size, pygame.SRCALPHA)
+    pygame.draw.rect(redondeo, (255, 255, 255, 255), redondeo.get_rect(), border_radius=10)
+    contenido.blit(redondeo, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+
+    superficie.blit(contenido, rect_mini.topleft)
+    pygame.draw.rect(superficie, borde, rect_mini, 2, border_radius=10)
+
+    # --- Nombre del nivel, a la derecha de la miniatura ---
+    texto_render = fuente.render(texto, True, BLANCO)
+    superficie.blit(texto_render, texto_render.get_rect(midleft=(rect_mini.right + 18, rect_dibujo.centery)))
+
+    return rect_dibujo
+
 
 def _dibujar_menu_inicio(superficie, tiempo_actual):
     global particulas_menu
@@ -292,21 +356,25 @@ def _dibujar_seleccion_nivel(superficie):
     mouse_pos = pygame.mouse.get_pos()
 
     titulo = FUENTE_TITULO.render("Elige un nivel", True, AMARILLO)
-    superficie.blit(titulo, titulo.get_rect(center=(ANCHO // 2, 70)))
+    superficie.blit(titulo, titulo.get_rect(center=(ANCHO // 2, 55)))
 
-    alto_boton = 58
-    espacio = 14
-    total_alto = len(NOMBRES_NIVELES) * alto_boton + (len(NOMBRES_NIVELES) - 1) * espacio
-    y = ALTO // 2 - total_alto // 2 + 20
+    # Posiciones calculadas desde un borde superior fijo (en vez de centrar
+    # el bloque completo) para controlar bien que no se pisen con el título
+    # de arriba ni con el botón "Volver" de abajo, ahora que cada tarjeta
+    # incluye una miniatura y ocupa más espacio vertical que un botón simple.
+    alto_boton = TAMANO_MINIATURA_NIVEL[1] + 20  # la tarjeta debe envolver la miniatura + margen
+    espacio = 10
+    y_top = 100
 
     for i, nombre in enumerate(NOMBRES_NIVELES):
-        rect_boton = pygame.Rect(0, 0, 440, alto_boton)
-        rect_boton.center = (ANCHO // 2, y)
+        rect_boton = pygame.Rect(0, y_top, 470, alto_boton)
+        rect_boton.centerx = ANCHO // 2
         hover = rect_boton.collidepoint(mouse_pos)
-        _dibujar_boton(superficie, rect_boton, nombre.strip(), FUENTE_MENU_OPCION, hover=hover)
+        miniatura = MINIATURAS_NIVELES[i] if i < len(MINIATURAS_NIVELES) else None
+        _dibujar_tarjeta_nivel(superficie, rect_boton, miniatura, nombre.strip(), FUENTE_MENU_OPCION, hover=hover)
 
         _BOTONES_NIVEL.append((rect_boton, i))
-        y += alto_boton + espacio
+        y_top += alto_boton + espacio
 
     # Botón para volver al menú principal (clickeable, además de ESC)
     rect_volver = pygame.Rect(0, 0, 170, 42)
@@ -1224,7 +1292,7 @@ def main():
                     corriendo = False
 
             # --- Pantalla de selección de nivel (agregado): teclado y click ---
-            if estado_juego == "SELECCION_NIVEL":
+            elif estado_juego == "SELECCION_NIVEL":
                 nivel_elegido = None
 
                 if evento.type == pygame.KEYDOWN:
@@ -1254,7 +1322,7 @@ def main():
                     estado_juego = "JUGANDO"
 
             # --- Pausa (nuevo): ESC durante la partida abre el menú de pausa ---
-            if evento.type == pygame.KEYDOWN and estado_juego == "JUGANDO" and evento.key == pygame.K_ESCAPE:
+            elif evento.type == pygame.KEYDOWN and estado_juego == "JUGANDO" and evento.key == pygame.K_ESCAPE:
                 estado_juego = "PAUSA"
 
             elif estado_juego == "PAUSA":

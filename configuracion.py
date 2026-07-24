@@ -378,6 +378,19 @@ def cargar_texturas_nivel(indice_nivel, tamano_bloque=None):
     return {"fondo": fondo, "bloques": bloques}
 
 
+def cargar_miniaturas_niveles(tamano=None):
+    """
+    Devuelve una lista de Surfaces (o None si no se encontró el archivo) con
+    una versión en miniatura del fondo de cada nivel, en el mismo orden que
+    TEXTURAS_NIVELES / NIVELES. Se usa para mostrar una previsualización de
+    cada nivel (su imagen de fondo) en el menú de selección de nivel.
+
+    Como solo se usa como decoración pequeña en el menú, se carga una sola
+    vez al iniciar el juego (no cada vez que se entra al menú).
+    """
+    return [cargar_imagen(datos.get("fondo"), tamano) for datos in TEXTURAS_NIVELES]
+
+
 def cargar_animaciones_enemigo(tipo="default", tamano=None):
     """
     Devuelve { "normal": [...], "congelado": [...], "tirador": [...],
